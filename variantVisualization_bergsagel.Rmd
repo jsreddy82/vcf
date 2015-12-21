@@ -1,0 +1,35 @@
+---
+title: "Variants for Visualization of UCSC Genome Browser"
+author: "Joseph Reddy, Ph.D"
+date: "December 21, 2015"
+output: word_document
+---
+
+### Generate vcf and tabix files for visualization in the UCSC genome broswer
+  
+  * Dr. Bergsagel wanted us to generate a vcf file for variants of interest from all of the patients in one file, so as to open it as a custom tract in the UCSC genome browser.
+  * Dr. Bergsagel provided a list of variants of interest in the file "Tumor\_Capture\_Somatic\_SNV.xlsx". The file contained a total of **4,674** unique variants.
+  * These variants of interest were converted to a tab-delimited file in the following format: "chr-postion-ref-alt". ("uniq\_pos.txt")
+  * Using the BioR annotated combined vcf file ("combinedgVCF.bior.vcf"), a trimmed vcf file was generated using the following commands:
+  
+#### 1. To extract header lines:  
+\$ grep "^#" combinedgVCF.bior.vcf | grep -v BIOR | awk -F\$'\\t' '{for(i=1;i<130;i++){printf "\%s\\t",\$i}}{printf "\\n"}' > header.vcf  
+  
+#### 2. To extract variants without BioR annotation:  
+\$ grep -v "^#" combinedgVCF.bior.vcf | awk -F\$'\\t' '{for(i=1;i<130;i++){printf "\%s\\t",\$i}}{printf "\\n"}' > variants.vcf  
+  
+#### 3. To combined trimmed header and variants:  
+\$ cat header.vcf variants.vcf > combinedgVCF_trimmed.vcf
+  
+#### 4. To extract variants of interest:  
+  * Using the list of variants of interest ("uniq\_pos.txt"), variant information along with patient genotype were extracted from ("combinedgVCF\_trimmed.vcf") and written to a new vcf file ("variantsofinterest.vcf").   
+
+\$ perl \~/scripts/analysis/extract\_variants.pl uniq\_pos.txt combinedgVCF\_trimmed.vcf > variantsofinterest.vcf  
+  
+#### 5. Generate compressed vcf file:  
+\$ bgzip variantsofinterest.vcf  
+  
+#### 6. Generate index file:  
+\$ tabix -p vcf variantsofinterest.vcf.gz  
+
+  * Files were then moved to 
